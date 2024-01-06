@@ -1,119 +1,150 @@
 import os
 import pickle
 import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 import matplotlib.animation as animation
+from matplotlib.ticker import FuncFormatter
+def load_pickle_files(directory):
+    """Load and concatenate lists from all pickle files in the given directory."""
+    concatenated_list = []
+    for filename in os.listdir(directory):
+        if filename.endswith('.pickle_list'):
+            filepath = os.path.join(directory, filename)
+            try:
+                with open(filepath, 'rb') as file:
+                    data = pickle.load(file)
+                    if isinstance(data, list):
+                        concatenated_list.extend(data)
+            except Exception as e:
+                print(f"Error loading {filename}: {e}")
+    return concatenated_list
+
+# def find_min_max_values(data):
+#     """Find minimum and maximum prices and volumes in the data."""
+#     min_price = float('inf')
+#     max_price = float('-inf')
+#     max_volume = float('-inf')
+
+#     for step in data:
+#         if len(step) > 2:  # Ensure there are at least two lists for bids and asks
+#             for sublist in step[1:3]:
+#                 for item in sublist:
+#                     if isinstance(item, (list, tuple)) and len(item) == 2:
+#                         price, volume = item
+#                         min_price = min(min_price, price)
+#                         max_price = max(max_price, price)
+#                         max_volume = max(max_volume, volume)
+
+#     return min_price, max_price, max_volume
 
 # Specify the directory containing the pickle files
 directory = 'C:/Temp/dom request data'
-
-# Initialize an empty list to store the concatenated data
-concatenated_list = []
-
-# List all files in the directory
-for filename in os.listdir(directory):
-    if filename.endswith('.pickle_list'):  # Check for pickle files
-        filepath = os.path.join(directory, filename)
-        with open(filepath, 'rb') as file:
-            try:
-                # Load the list from the pickle file
-                data = pickle.load(file)
-                if isinstance(data, list):  # Check if the data is a list
-                    concatenated_list.extend(data)  # Concatenate the list
-            except Exception as e:
-                print(f"Error loading {filename}: {e}")
-
-# This should be your actual data sequence
-scope_data = concatenated_list
-scope_data = sorted(scope_data, key=lambda x: x[0])
-
-#visualize data of by bunches
-first_number_of_bunch = 0
-last_number_of_bunch = 100
-
-# Initialize min and max values
-min_price = float('inf')
-max_price = float('-inf')
-max_volume = float('-inf')
-
-# Loop through each step in the data sequence to find min/max values
-for step in scope_data:
-    if len(step) > 2:  # Ensure there are at least two lists for bids and asks
-        for sublist in step[1:3]:  # Check only the second and third lists for bids and asks
-            prices, volumes = zip(*sublist)
-            min_price = min(min_price, *prices)
-            max_price = max(max_price, *prices)
-            max_volume = max(max_volume, *volumes)
+scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0])
+# min_price, max_price, max_volume = find_min_max_values(scope_data)
 
 # Create the Tkinter window
 root = tk.Tk()
 root.title("Bar Scatter Plot Animation")
-
-# Double the size of the figure
-current_figsize = plt.rcParams["figure.figsize"]
-new_figsize = (current_figsize[0]*2, current_figsize[1]*2)
-
-# Create the Matplotlib figure and axes
+new_figsize = (plt.rcParams["figure.figsize"][0]*2, plt.rcParams["figure.figsize"][1]*2)
 fig, ax = plt.subplots(figsize=new_figsize)
-ax.set_xlim(min_price, max_price)
-ax.set_ylim(0, max_volume)
-
 bar_width = 0.00001  # Adjust as needed
 
-# Define the update function for the animation
-def update(frame_number):
-    ax.clear()
-    ax.set_xlim(min_price, max_price)
-    ax.set_ylim(0, max_volume)
+# def update(frame_number):
+#     """Update function for the animation."""
+#     ax.clear()
+#     ax.set_xlim(min_price, max_price)
+#     ax.set_ylim(0, max_volume)
     
-    # Ensure the frame number doesn't exceed the length of the dataset
-    if frame_number < len(scope_data):
-        step = scope_data[frame_number]
+#     if frame_number < len(scope_data):
+#         step = scope_data[frame_number]
+#         if len(step) > 2:
+#             x1, y1 = zip(*step[1])
+#             x2, y2 = zip(*step[2])
+#             ax.bar(x1, y1, width=bar_width, color='green', align='center')
+#             ax.bar(x2, y2, width=bar_width, color='red', align='center')
+#             ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
+#             ax.xaxis.set_major_locator(MaxNLocator(30))
+#             ax.yaxis.set_major_locator(MaxNLocator(30))
+#             ax.xaxis.grid(True)
+#             ax.yaxis.grid(True)
+#             plt.xticks(rotation=90)
+#             ax.set_xlabel('Price')
+#             ax.set_ylabel('Volume')
+#             ax.set_title('EURUSD deep of the market')
+#             ax.text(min_price, max_volume * 0.9, step[0], fontsize=30, color='blue')
+
+# Define a custom formatting function
+def format_with_dots(x, pos):
+    return '{:,}'.format(int(x)).replace(',', '.')
+
+def update(frame_number):
+    """Update function for the animation."""
+    ax.clear()
+
+    # Determine the range of elements to display
+    start_idx = frame_number
+    end_idx = start_idx + 30
+
+    # Check if the end index exceeds the length of the data
+    if end_idx > len(scope_data):
+        return  # Stop updating if we've reached the end of the data
+
+    # Extract the range of data to be visualized
+    current_data = scope_data[start_idx:end_idx]
+
+    # Calculate min and max price and volume for the current data window
+    current_prices = []
+    current_volumes = []
+    for step in current_data:
         if len(step) > 2:  # Ensure there are at least two lists for bids and asks
+            for sublist in step[1:3]:
+                for item in sublist:
+                    if isinstance(item, (list, tuple)) and len(item) == 2:
+                        price, volume = item
+                        current_prices.append(price)
+                        current_volumes.append(volume)
+    
+    # Calculate min and max for the current frame
+    if current_prices and current_volumes:
+        min_price = min(current_prices)
+        max_price = max(current_prices)
+        min_volume = min(current_volumes)
+        max_volume = max(current_volumes)
+        ax.set_xlim(min_price, max_price)
+        ax.set_ylim(min_volume, max_volume)
+
+    # Set the limits for the x-axis and y-axis
+    ax.set_xlim(min_price, max_price)
+    ax.set_ylim(min_volume, max_volume)
+
+    # Your existing plotting logic, adjusted for current_data
+    for step in current_data:
+        if len(step) > 2:
             x1, y1 = zip(*step[1])
             x2, y2 = zip(*step[2])
             ax.bar(x1, y1, width=bar_width, color='green', align='center')
             ax.bar(x2, y2, width=bar_width, color='red', align='center')
-
-            # Set the x-axis formatter
-            ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
-
-            # Set the maximum number of x-axis and y-axis ticks
-            ax.xaxis.set_major_locator(MaxNLocator(30))  # Adjust the number 15 as needed
-            ax.yaxis.set_major_locator(MaxNLocator(30))  # Adjust the number 10 as needed            
-
-            # Enable grid only for the x-axis
-            ax.xaxis.grid(True)
-
-            # Enable grid only for the y-axis
-            ax.yaxis.grid(True)
-
-            # Rotate x-axis labels to be vertical
-            plt.xticks(rotation=90)
     
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
+    ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+    ax.yaxis.set_major_formatter(FuncFormatter(format_with_dots))
+    #ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))  # Set y-axis formatter
+    ax.xaxis.set_major_locator(MaxNLocator(30))
+    ax.yaxis.set_major_locator(MaxNLocator(30))
+    ax.xaxis.grid(True)
+    ax.yaxis.grid(True)
+    plt.xticks(rotation=90)
     ax.set_xlabel('Price')
     ax.set_ylabel('Volume')
     ax.set_title('EURUSD deep of the market')
-    x_position = min_price
-    #x_position = (min_price + max_price) / 2
-    y_position = max_volume * 0.9
-    ax.text(x_position, y_position, step[0], fontsize=30, color='blue')
+    # Displaying the timestamp of the first element in the current range
+    if current_data:
+        ax.text(min_price, max_volume * 0.9, current_data[0][0], fontsize=30, color='blue')
 
-# Create a canvas and add the figure to it
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-# Create the animation
-ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=50, repeat=False)
-
-# Tkinter event loop
+ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=300, repeat=False)
 root.mainloop()
-
-
-
-
-
