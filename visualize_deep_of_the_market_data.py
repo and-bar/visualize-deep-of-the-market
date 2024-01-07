@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 import matplotlib.animation as animation
 from matplotlib.ticker import FuncFormatter
+
 def load_pickle_files(directory):
     """Load and concatenate lists from all pickle files in the given directory."""
     concatenated_list = []
@@ -16,28 +17,10 @@ def load_pickle_files(directory):
                 with open(filepath, 'rb') as file:
                     data = pickle.load(file)
                     if isinstance(data, list):
-                        concatenated_list.extend(data)
+                        concatenated_list.extend(data) #concatenated_list[0][3][0]
             except Exception as e:
                 print(f"Error loading {filename}: {e}")
     return concatenated_list
-
-# def find_min_max_values(data):
-#     """Find minimum and maximum prices and volumes in the data."""
-#     min_price = float('inf')
-#     max_price = float('-inf')
-#     max_volume = float('-inf')
-
-#     for step in data:
-#         if len(step) > 2:  # Ensure there are at least two lists for bids and asks
-#             for sublist in step[1:3]:
-#                 for item in sublist:
-#                     if isinstance(item, (list, tuple)) and len(item) == 2:
-#                         price, volume = item
-#                         min_price = min(min_price, price)
-#                         max_price = max(max_price, price)
-#                         max_volume = max(max_volume, volume)
-
-#     return min_price, max_price, max_volume
 
 # Specify the directory containing the pickle files
 directory = 'C:/Temp/dom request data'
@@ -50,30 +33,6 @@ root.title("Bar Scatter Plot Animation")
 new_figsize = (plt.rcParams["figure.figsize"][0]*2, plt.rcParams["figure.figsize"][1]*2)
 fig, ax = plt.subplots(figsize=new_figsize)
 bar_width = 0.00001  # Adjust as needed
-
-# def update(frame_number):
-#     """Update function for the animation."""
-#     ax.clear()
-#     ax.set_xlim(min_price, max_price)
-#     ax.set_ylim(0, max_volume)
-    
-#     if frame_number < len(scope_data):
-#         step = scope_data[frame_number]
-#         if len(step) > 2:
-#             x1, y1 = zip(*step[1])
-#             x2, y2 = zip(*step[2])
-#             ax.bar(x1, y1, width=bar_width, color='green', align='center')
-#             ax.bar(x2, y2, width=bar_width, color='red', align='center')
-#             ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
-#             ax.xaxis.set_major_locator(MaxNLocator(30))
-#             ax.yaxis.set_major_locator(MaxNLocator(30))
-#             ax.xaxis.grid(True)
-#             ax.yaxis.grid(True)
-#             plt.xticks(rotation=90)
-#             ax.set_xlabel('Price')
-#             ax.set_ylabel('Volume')
-#             ax.set_title('EURUSD deep of the market')
-#             ax.text(min_price, max_volume * 0.9, step[0], fontsize=30, color='blue')
 
 # Define a custom formatting function
 def format_with_dots(x, pos):
@@ -130,7 +89,6 @@ def update(frame_number):
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.yaxis.set_major_formatter(FuncFormatter(format_with_dots))
-    #ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))  # Set y-axis formatter
     ax.xaxis.set_major_locator(MaxNLocator(30))
     ax.yaxis.set_major_locator(MaxNLocator(30))
     ax.xaxis.grid(True)
@@ -142,9 +100,11 @@ def update(frame_number):
     # Displaying the timestamp of the first element in the current range
     if current_data:
         ax.text(min_price, max_volume * 0.9, current_data[0][0], fontsize=30, color='blue')
+        ax.text(min_price, max_volume * 0.8, "Ask: " + f"{current_data[0][3][1]:,}".replace(",", "."), fontsize=30, color='blue')
+        ax.text(min_price, max_volume * 0.7, "Bid: " + f"{current_data[0][3][0]:,}".replace(",", "."), fontsize=30, color='blue')
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=300, repeat=False)
+ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=100, repeat=False)
 root.mainloop()
