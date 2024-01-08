@@ -3,10 +3,11 @@ import pickle
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter, MaxNLocator
+from matplotlib.ticker import FormatStrFormatter, AutoLocator
 import matplotlib.animation as animation
 from matplotlib.ticker import FuncFormatter
-import time
+
+from matplotlib.ticker import MultipleLocator
 
 def load_pickle_files(directory):
     """Load and concatenate lists from all pickle files in the given directory."""
@@ -101,12 +102,20 @@ def update(frame_number):
     x2, y2 = zip(*current_data[1][2])
     ax.bar(x1, y1, width=bar_width, color='green', align='center')
     ax.bar(x2, y2, width=bar_width, color='red', align='center')
+    
+    # For grid lines every million and every hundred thousand
+    ax.yaxis.set_major_locator(MultipleLocator(1000000))
+    ax.yaxis.set_major_locator(MultipleLocator(500000))
+    ax.yaxis.set_major_locator(MultipleLocator(100000))
+    # Enable grid lines on major ticks
+    ax.yaxis.grid(True, which='major')
 
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.yaxis.set_major_formatter(FuncFormatter(format_with_dots))
-    ax.xaxis.set_major_locator(MaxNLocator(30))
-    ax.yaxis.set_major_locator(MaxNLocator(30))
+    # ax.xaxis.set_major_locator(MaxNLocator(30))
+    # ax.yaxis.set_major_locator(MaxNLocator(30))
+    ax.yaxis.set_major_locator(AutoLocator())
     ax.xaxis.grid(True)
     ax.yaxis.grid(True)
     plt.xticks(rotation=90)
