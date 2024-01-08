@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 import matplotlib.animation as animation
 from matplotlib.ticker import FuncFormatter
+import time
 
 def load_pickle_files(directory):
     """Load and concatenate lists from all pickle files in the given directory."""
@@ -17,7 +18,7 @@ def load_pickle_files(directory):
                 with open(filepath, 'rb') as file:
                     data = pickle.load(file)
                     if isinstance(data, list):
-                        concatenated_list.extend(data) #concatenated_list[0][3][0]
+                        concatenated_list.extend(data)
             except Exception as e:
                 print(f"Error loading {filename}: {e}")
     return concatenated_list
@@ -34,17 +35,33 @@ new_figsize = (plt.rcParams["figure.figsize"][0]*2, plt.rcParams["figure.figsize
 fig, ax = plt.subplots(figsize=new_figsize)
 bar_width = 0.00001  # Adjust as needed
 
+# Animation control variable
+is_paused = False
+
+def toggle_animation():
+    global is_paused
+    is_paused = not is_paused
+
 # Define a custom formatting function
 def format_with_dots(x, pos):
     return '{:,}'.format(int(x)).replace(',', '.')
 
 def update(frame_number):
     """Update function for the animation."""
+    
+    global is_paused
+
+    # Check if the animation is paused
+    if is_paused:
+        # Schedule this function to be called again after 1000 ms (1 second)
+        root.after(300, lambda: update(frame_number))
+        return
+
     ax.clear()
 
     # Determine the range of elements to display
     start_idx = frame_number
-    end_idx = start_idx + 30
+    end_idx = start_idx + 5
 
     # Check if the end index exceeds the length of the data
     if end_idx > len(scope_data):
@@ -79,13 +96,12 @@ def update(frame_number):
     ax.set_ylim(min_volume, max_volume)
 
     # Your existing plotting logic, adjusted for current_data
-    for step in current_data:
-        if len(step) > 2:
-            x1, y1 = zip(*step[1])
-            x2, y2 = zip(*step[2])
-            ax.bar(x1, y1, width=bar_width, color='green', align='center')
-            ax.bar(x2, y2, width=bar_width, color='red', align='center')
-    
+
+    x1, y1 = zip(*current_data[1][1])
+    x2, y2 = zip(*current_data[1][2])
+    ax.bar(x1, y1, width=bar_width, color='green', align='center')
+    ax.bar(x2, y2, width=bar_width, color='red', align='center')
+
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.yaxis.set_major_formatter(FuncFormatter(format_with_dots))
@@ -99,12 +115,21 @@ def update(frame_number):
     ax.set_title('EURUSD deep of the market')
     # Displaying the timestamp of the first element in the current range
     if current_data:
-        ax.text(min_price, max_volume * 0.9, current_data[0][0], fontsize=30, color='blue')
-        ax.text(min_price, max_volume * 0.8, "Ask: " + f"{current_data[0][3][1]:,}".replace(",", "."), fontsize=30, color='blue')
-        ax.text(min_price, max_volume * 0.7, "Bid: " + f"{current_data[0][3][0]:,}".replace(",", "."), fontsize=30, color='blue')
+        ax.text(min_price, max_volume * 0.9, current_data[0][0], fontsize=20, color='blue')
+        ax.text(min_price, max_volume * 0.8, "Ask: " + f"{current_data[0][3][1]:,}".replace(",", "."), fontsize=20, color='blue')
+        ax.text(min_price, max_volume * 0.7, "Bid: " + f"{current_data[0][3][0]:,}".replace(",", "."), fontsize=20, color='blue')
 
+# Create a canvas and add the figure to it
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=100, repeat=False)
+
+# Create the animation
+ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=1000, repeat=False)
+
+# Add a pause button
+pause_button = tk.Button(root, text="Pause", command=toggle_animation)
+pause_button.pack()
+
+# Tkinter event loop
 root.mainloop()
