@@ -60,9 +60,9 @@ def update(frame_number):
 
     ax.clear()
 
-    # Determine the range of elements to display
+    # Determine the range of ticks to display
     start_idx = frame_number
-    end_idx = start_idx + 5
+    end_idx = start_idx + 10
 
     # Check if the end index exceeds the length of the data
     if end_idx > len(scope_data):
@@ -96,10 +96,12 @@ def update(frame_number):
     ax.set_xlim(min_price, max_price)
     ax.set_ylim(min_volume, max_volume)
 
-    # Your existing plotting logic, adjusted for current_data
+    # Number of the tick to visualize data from
+    tick_number = 5
 
-    x1, y1 = zip(*current_data[1][1])
-    x2, y2 = zip(*current_data[1][2])
+    # Your existing plotting logic, adjusted for current_data
+    x1, y1 = zip(*current_data[tick_number][1])
+    x2, y2 = zip(*current_data[tick_number][2])
     ax.bar(x1, y1, width=bar_width, color='green', align='center')
     ax.bar(x2, y2, width=bar_width, color='red', align='center')
     
@@ -124,9 +126,10 @@ def update(frame_number):
     ax.set_title('EURUSD deep of the market')
     # Displaying the timestamp of the first element in the current range
     if current_data:
-        ax.text(min_price, max_volume * 0.9, current_data[0][0], fontsize=20, color='blue')
-        ax.text(min_price, max_volume * 0.8, "Ask: " + f"{current_data[0][3][1]:,}".replace(",", "."), fontsize=20, color='blue')
-        ax.text(min_price, max_volume * 0.7, "Bid: " + f"{current_data[0][3][0]:,}".replace(",", "."), fontsize=20, color='blue')
+        ax.text(min_price, max_volume * 0.95, current_data[tick_number][0], fontsize=20, color='black')
+        ax.text(min_price, max_volume * 0.85, "Ask total volume: " + f"{current_data[tick_number][3][1]:,}".replace(",", "."), fontsize=20, color='red')
+        ax.text(min_price, max_volume * 0.80, "Bid total volume: " + f"{current_data[tick_number][3][0]:,}".replace(",", "."), fontsize=20, color='green')
+        ax.text(min_price, max_volume * 0.90, "Bid: " + str(current_data[tick_number][1][0][0]), fontsize=20, color='black')
 
 # Create a canvas and add the figure to it
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -134,7 +137,7 @@ canvas.draw()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
 # Create the animation
-ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=1000, repeat=False)
+ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=500, repeat=False)
 
 # Add a pause button
 pause_button = tk.Button(root, text="Pause", command=toggle_animation)
