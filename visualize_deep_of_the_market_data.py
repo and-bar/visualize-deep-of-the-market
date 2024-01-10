@@ -62,7 +62,7 @@ def update(frame_number):
 
     # Determine the range of ticks to display
     start_idx = frame_number
-    end_idx = start_idx + 10
+    end_idx = start_idx + 50
 
     # Check if the end index exceeds the length of the data
     if end_idx > len(scope_data):
@@ -92,10 +92,6 @@ def update(frame_number):
         ax.set_xlim(min_price, max_price)
         ax.set_ylim(min_volume, max_volume)
 
-    # Set the limits for the x-axis and y-axis
-    ax.set_xlim(min_price, max_price)
-    ax.set_ylim(min_volume, max_volume)
-
     # Number of the tick to visualize data from
     tick_number = 5
 
@@ -104,19 +100,10 @@ def update(frame_number):
     x2, y2 = zip(*current_data[tick_number][2])
     ax.bar(x1, y1, width=bar_width, color='green', align='center')
     ax.bar(x2, y2, width=bar_width, color='red', align='center')
-    
-    # For grid lines every million and every hundred thousand
-    ax.yaxis.set_major_locator(MultipleLocator(1000000))
-    ax.yaxis.set_major_locator(MultipleLocator(500000))
-    ax.yaxis.set_major_locator(MultipleLocator(100000))
-    # Enable grid lines on major ticks
     ax.yaxis.grid(True, which='major')
-
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.yaxis.set_major_formatter(FuncFormatter(format_with_dots))
-    # ax.xaxis.set_major_locator(MaxNLocator(30))
-    # ax.yaxis.set_major_locator(MaxNLocator(30))
     ax.yaxis.set_major_locator(AutoLocator())
     ax.xaxis.grid(True)
     ax.yaxis.grid(True)
@@ -124,6 +111,7 @@ def update(frame_number):
     ax.set_xlabel('Price')
     ax.set_ylabel('Volume')
     ax.set_title('EURUSD deep of the market')
+
     # Displaying the timestamp of the first element in the current range
     if current_data:
         ax.text(min_price, max_volume * 0.95, current_data[tick_number][0], fontsize=20, color='black')
@@ -137,7 +125,7 @@ canvas.draw()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
 # Create the animation
-ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=500, repeat=False)
+ani = animation.FuncAnimation(fig, update, frames=len(scope_data), interval=50, repeat=False)
 
 # Add a pause button
 pause_button = tk.Button(root, text="Pause", command=toggle_animation)
