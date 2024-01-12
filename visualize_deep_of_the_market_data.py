@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter, AutoLocator
 import matplotlib.animation as animation
 from matplotlib.ticker import FuncFormatter
-
-from matplotlib.ticker import MultipleLocator
+import pandas as pd
+import datetime
 
 def load_pickle_files(directory):
     """Load and concatenate lists from all pickle files in the given directory."""
@@ -27,7 +27,11 @@ def load_pickle_files(directory):
 # Specify the directory containing the pickle files
 directory = 'C:/Temp/dom request data'
 scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0])
-# min_price, max_price, max_volume = find_min_max_values(scope_data)
+
+# Define the column names
+columns = ['open', 'high', 'close', 'low', 'volume']
+# Create an empty DataFrame with these columns
+df_second_candlestick = pd.DataFrame(columns=columns)
 
 # Create the Tkinter window
 root = tk.Tk()
@@ -54,7 +58,7 @@ def update(frame_number):
 
     # Check if the animation is paused
     if is_paused:
-        # Schedule this function to be called again after 1000 ms (1 second)
+        # Schedule this function to be called again after 300 ms (1 second)
         root.after(300, lambda: update(frame_number))
         return
 
@@ -118,6 +122,45 @@ def update(frame_number):
         ax.text(min_price, max_volume * 0.85, "Ask total volume: " + f"{current_data[tick_number][3][1]:,}".replace(",", "."), fontsize=20, color='red')
         ax.text(min_price, max_volume * 0.80, "Bid total volume: " + f"{current_data[tick_number][3][0]:,}".replace(",", "."), fontsize=20, color='green')
         ax.text(min_price, max_volume * 0.90, "Bid: " + str(current_data[tick_number][1][0][0]), fontsize=20, color='black')
+
+    global df_second_candlestick
+
+    # get last element from df_second_candlestick, update its OLHCV, if the data is from
+    # new second, create new element in df_second_candlestick with its values
+
+    time_of_tick_with_miliseconds = current_data[tick_number][0]
+    time_of_tick = datetime.datetime(
+                                        time_of_tick_with_miliseconds.year,
+                                        time_of_tick_with_miliseconds.month,
+                                        time_of_tick_with_miliseconds.day,
+                                        time_of_tick_with_miliseconds.hour,
+                                        time_of_tick_with_miliseconds.minute,
+                                        time_of_tick_with_miliseconds.second,
+                                        tzinfo=time_of_tick_with_miliseconds.tzinfo
+                                    )
+
+    # get last element from df_second_candlestick
+    if not df_second_candlestick.empty:
+        # data frame is not empty
+        # check if exist candlestick with current timestamp
+        if time_of_tick in df_second_candlestick.index:
+            # datetime of current tick exist in data frame
+            print("")
+        else:
+            # datetime of current tick do not present in data frame
+            last_timestamp = pd.to_datetime(df_second_candlestick.index[-1])
+            hour = last_timestamp.hour
+            minute = last_timestamp.minute
+            second = last_timestamp.second
+            print("stop")
+
+    else:
+        # data frame is empty, write first element to data frame
+        bid_of_last_tick = current_data[tick_number][1][0][0]
+        total_volume_bid_ask_of_last_tick = current_data[tick_number][3][1] + current_data[tick_number][3][0]
+        seconds_candlestick = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
+        
+        df_second_candlestick.loc[time_of_tick] = seconds_candlestick
 
 # Create a canvas and add the figure to it
 canvas = FigureCanvasTkAgg(fig, master=root)
