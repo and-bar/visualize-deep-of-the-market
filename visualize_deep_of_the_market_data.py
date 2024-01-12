@@ -145,22 +145,23 @@ def update(frame_number):
         # check if exist candlestick with current timestamp
         if time_of_tick in df_second_candlestick.index:
             # datetime of current tick exist in data frame
-            print("")
+
+            print(df_second_candlestick)
         else:
             # datetime of current tick do not present in data frame
-            last_timestamp = pd.to_datetime(df_second_candlestick.index[-1])
-            hour = last_timestamp.hour
-            minute = last_timestamp.minute
-            second = last_timestamp.second
-            print("stop")
+            # add new candlestick data row
+            bid_of_last_tick = current_data[tick_number][1][0][0]
+            total_volume_bid_ask_of_last_tick = current_data[tick_number][3][1] + current_data[tick_number][3][0]
+            seconds_candlestick_ohlc = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
+            df_second_candlestick.loc[time_of_tick] = seconds_candlestick_ohlc
+            print(df_second_candlestick)
 
     else:
         # data frame is empty, write first element to data frame
         bid_of_last_tick = current_data[tick_number][1][0][0]
         total_volume_bid_ask_of_last_tick = current_data[tick_number][3][1] + current_data[tick_number][3][0]
-        seconds_candlestick = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
-        
-        df_second_candlestick.loc[time_of_tick] = seconds_candlestick
+        seconds_candlestick_ohlc = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
+        df_second_candlestick.loc[time_of_tick] = seconds_candlestick_ohlc
 
 # Create a canvas and add the figure to it
 canvas = FigureCanvasTkAgg(fig, master=root)
