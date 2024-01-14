@@ -28,24 +28,38 @@ def load_pickle_files(directory):
 directory = 'C:/Temp/dom request data'
 scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 
-def run_tkinter_form (dom_data):
-    """Create tkinter form, visualize data of dom."""
-    
-    def draw_one_tick_data_on_the_canvas (canvas, tick):
-        """draw data of one tick on the canvas"""
-        canvas_resolution =  [3072, 1665]
-        index = tick[0]
-        bid_prices, bid_volumes = zip(*tick[1])
-        ask_prices, ask_volumes = zip(*tick[2])
-        total_volumes = tick[3]
-        max_price = max(ask_prices)
-        min_price = min(bid_prices)
-        # scaling here 500.000 to one
+def draw_dom_data_on_canvas (canvas, dom_data):
+    """draw dom data on the canvas"""
+    # logic of how many ticks can be visualized on width of canvas
+    canvas_with = 1665
+    n_tick = len(dom_data) - 1
+    while ((canvas_with > 0) and (n_tick >= 0)):
+        bid_prices, bid_volumes = zip(*dom_data[n_tick][1])
+        ask_prices, ask_volumes = zip(*dom_data[n_tick][2])
+        # scaling here volume 500.000 to one pixel
+        bid_volumes_pixels = [round(element / 500000) for element in bid_volumes]
+        ask_volumes_pixels = [round(element / 500000) for element in ask_volumes]
+        max_volume_pixel = max(max(bid_volumes_pixels), max(ask_volumes_pixels))
+        canvas_with -= max_volume_pixel - 2
+        # can not draw to the left
+        if canvas_with - max_volume_pixel <= 0:
+            break
+        n_tick -= 1
+    # find max and min prices among all ticks
+    range_of_ticks_to_draw = dom_data[n_tick+1:len(dom_data)]
+    max_price = max([pair[0] for sublist in [tick_data[2]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
+    min_price = min([pair[0] for sublist in [tick_data[1]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
+    # draw all tick data on canvas
+    canvas_with = 3072
+    for index in range(len(range_of_ticks_to_draw)-1, -1, -1):
+        bid_prices, bid_volumes = zip(*range_of_ticks_to_draw[index][1])
+        ask_prices, ask_volumes = zip(*range_of_ticks_to_draw[index][2])
+        # scaling here volume 500.000 to one pixel
         bid_volumes_pixels = [round(element / 500000) for element in bid_volumes]
         ask_volumes_pixels = [round(element / 500000) for element in ask_volumes]
         # Pixel range
         min_pixel_vertical = 1
-        max_pixel_vertical = canvas_resolution[1] - 1
+        max_pixel_vertical = 1664
         # Calculate scaling factor
         scaling_factor = (max_pixel_vertical - min_pixel_vertical) / (max_price - min_price)
         # Map each price to its pixel value
@@ -54,30 +68,19 @@ def run_tkinter_form (dom_data):
         max_volume_pixel = max(max(bid_volumes_pixels), max(ask_volumes_pixels))
         bid_volume_pixels = list(zip(bid_pixels, bid_volumes_pixels))
         ask_volume_pixels = list(zip(ask_pixels, ask_volumes_pixels))
-        top_left_coordinate_left = canvas_resolution[0] - max_volume_pixel
+        top_left_coordinate_left = canvas_with - max_volume_pixel
         # drawing volumes on the left
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+10, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+10, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
-        print(bid_prices, ask_prices)
-        print(bid_pixels, ask_pixels)
-        print("")
-    
-    def draw_dom_data_on_canvas (canvas, dom_data, index= 0):
-        """draw dom data on the canvas"""
-        if index < len(dom_data):
-            draw_one_tick_data_on_the_canvas(canvas, dom_data[index])
-            # Schedule the next tick after a delay
-            canvas.after(1000, lambda: draw_dom_data_on_canvas(canvas, dom_data, index + 1))
-    
-    root = tk.Tk()
-    root.title("EUR USD deep of the market")
-    root.state('zoomed') # Maximize the window
-    canvas = tk.Canvas(root, bg='white')
-    canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-    draw_dom_data_on_canvas(canvas, dom_data)
-    root.mainloop()
+        canvas_with = top_left_coordinate_left - 2
 
-run_tkinter_form (scope_data[:5])
+root = tk.Tk()
+root.title("EUR USD deep of the market")
+root.state('zoomed') # Maximize the window
+canvas = tk.Canvas(root, bg='black')
+canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
+draw_dom_data_on_canvas(canvas, scope_data[:100])
+root.mainloop()
 
 
 
