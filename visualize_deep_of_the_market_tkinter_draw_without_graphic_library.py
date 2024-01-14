@@ -31,7 +31,7 @@ scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of 
 def draw_dom_data_on_canvas (canvas, dom_data):
     """draw dom data on the canvas"""
     # logic of how many ticks can be visualized on width of canvas
-    canvas_with = 1665
+    canvas_with = 3072
     n_tick = len(dom_data) - 1
     while ((canvas_with > 0) and (n_tick >= 0)):
         bid_prices, bid_volumes = zip(*dom_data[n_tick][1])
@@ -40,7 +40,7 @@ def draw_dom_data_on_canvas (canvas, dom_data):
         bid_volumes_pixels = [round(element / 500000) for element in bid_volumes]
         ask_volumes_pixels = [round(element / 500000) for element in ask_volumes]
         max_volume_pixel = max(max(bid_volumes_pixels), max(ask_volumes_pixels))
-        canvas_with -= max_volume_pixel - 2
+        canvas_with -= max_volume_pixel - 1
         # can not draw to the left
         if canvas_with - max_volume_pixel <= 0:
             break
@@ -68,18 +68,19 @@ def draw_dom_data_on_canvas (canvas, dom_data):
         max_volume_pixel = max(max(bid_volumes_pixels), max(ask_volumes_pixels))
         bid_volume_pixels = list(zip(bid_pixels, bid_volumes_pixels))
         ask_volume_pixels = list(zip(ask_pixels, ask_volumes_pixels))
-        top_left_coordinate_left = canvas_with - max_volume_pixel
+        top_left_coordinate_left = canvas_with - max_volume_pixel -1
         # drawing volumes on the left
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+10, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+10, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
-        canvas_with = top_left_coordinate_left - 2
+        canvas_with = top_left_coordinate_left
 
 root = tk.Tk()
 root.title("EUR USD deep of the market")
 root.state('zoomed') # Maximize the window
 canvas = tk.Canvas(root, bg='black')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-draw_dom_data_on_canvas(canvas, scope_data[:100])
+draw_dom_data_on_canvas(canvas, scope_data[:400])
+    
 root.mainloop()
 
 
