@@ -28,10 +28,11 @@ def load_pickle_files(directory):
 directory = 'C:/Temp/dom request data'
 scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 
-def draw_dom_data_on_canvas (canvas, dom_data):
+def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
     """draw dom data on the canvas"""
     # logic of how many ticks can be visualized on width of canvas
     canvas_with = 3072
+    dom_data = dom_data_full[:end_tick_bar_to_draw]
     n_tick = len(dom_data) - 1
     while ((canvas_with > 0) and (n_tick >= 0)):
         bid_prices, bid_volumes = zip(*dom_data[n_tick][1])
@@ -50,13 +51,14 @@ def draw_dom_data_on_canvas (canvas, dom_data):
     max_price = max([pair[0] for sublist in [tick_data[2]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
     min_price = min([pair[0] for sublist in [tick_data[1]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
     # draw all tick data on canvas
+    canvas.delete("all")
     canvas_with = 3072
     for index in range(len(range_of_ticks_to_draw)-1, -1, -1):
         bid_prices, bid_volumes = zip(*range_of_ticks_to_draw[index][1])
         ask_prices, ask_volumes = zip(*range_of_ticks_to_draw[index][2])
         # scaling here volume 500.000 to one pixel
-        bid_volumes_pixels = [round(element / 500000) for element in bid_volumes]
-        ask_volumes_pixels = [round(element / 500000) for element in ask_volumes]
+        bid_volumes_pixels = [round(element / 50000) for element in bid_volumes]
+        ask_volumes_pixels = [round(element / 50000) for element in ask_volumes]
         # Pixel range
         min_pixel_vertical = 1
         max_pixel_vertical = 1664
@@ -73,13 +75,15 @@ def draw_dom_data_on_canvas (canvas, dom_data):
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+10, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+10, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
         canvas_with = top_left_coordinate_left
+    root.after(200, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 1))
 
 root = tk.Tk()
 root.title("EUR USD deep of the market")
 root.state('zoomed') # Maximize the window
 canvas = tk.Canvas(root, bg='black')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-draw_dom_data_on_canvas(canvas, scope_data[:400])
+end_tick_bar_to_draw = 1
+draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw)
     
 root.mainloop()
 
