@@ -31,7 +31,7 @@ scope_data = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of 
 def run_tkinter_form (dom_data):
     """Create tkinter form, visualize data of dom."""
     
-    def draw_one_tick_data_on_the_canvas (tick):
+    def draw_one_tick_data_on_the_canvas (canvas, tick):
         """draw data of one tick on the canvas"""
         canvas_resolution =  [3072, 1665]
         index = tick[0]
@@ -62,20 +62,22 @@ def run_tkinter_form (dom_data):
         print(bid_pixels, ask_pixels)
         print("")
     
-    def draw_dom_data_on_canvas (dom_data):
+    def draw_dom_data_on_canvas (canvas, dom_data, index= 0):
         """draw dom data on the canvas"""
-        for tick in dom_data:
-            draw_one_tick_data_on_the_canvas(tick)
+        if index < len(dom_data):
+            draw_one_tick_data_on_the_canvas(canvas, dom_data[index])
+            # Schedule the next tick after a delay
+            canvas.after(1000, lambda: draw_dom_data_on_canvas(canvas, dom_data, index + 1))
     
     root = tk.Tk()
     root.title("EUR USD deep of the market")
     root.state('zoomed') # Maximize the window
     canvas = tk.Canvas(root, bg='white')
     canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-    draw_dom_data_on_canvas(dom_data)
+    draw_dom_data_on_canvas(canvas, dom_data)
     root.mainloop()
 
-run_tkinter_form (scope_data[:1])
+run_tkinter_form (scope_data[:5])
 
 
 
