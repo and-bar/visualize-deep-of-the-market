@@ -93,11 +93,11 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
         bid_volume_pixels = list(zip(bid_pixels, bid_volumes_pixels))
         ask_volume_pixels = list(zip(ask_pixels, ask_volumes_pixels))
         top_left_coordinate_left = canvas_with_left - max_volume_pixel - space_between_volume_bars
-        # drawing volumes on the
+        # draw vertical line separation between ticks
+        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom, fill= "black", outline= "gray60")
+        # drawing volumes on the canvas
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
-        # draw vertical line separation between ticks
-        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom, fill= "black")
         canvas_with_left = top_left_coordinate_left
     
     # draw horizontal prices lines each 0.0001 and 0.00005 price level
@@ -109,12 +109,12 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
     list_price_levels_plus_pixel_levels = list(zip(list_price_levels, level_line_prices_pixels))
     [canvas.create_text(maximum_with_canvas + 60, level_line_prices_pixels, text= "{:.5f}".format(round(price, 5)), fill="black", font=('Helvetica', '15', 'bold italic')) for price, level_line_prices_pixels in list_price_levels_plus_pixel_levels]
     
-    root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 3))
+    root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 10))
 
 root = tk.Tk()
 root.title("EUR USD deep of the market")
 root.state('zoomed') # Maximize the window
-canvas = tk.Canvas(root, bg='gray')
+canvas = tk.Canvas(root, bg='gray50')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
 end_tick_bar_to_draw = 1
 draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw)
