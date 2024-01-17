@@ -51,16 +51,10 @@ def get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_can
         n_tick -= 1
     return dom_data, n_tick+1
 
-def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
-    """draw dom data on the canvas"""
-    maximum_with_canvas, maximum_height_canvas = get_canvas_size_for_drawing_volumes(canvas)
-    one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
-    space_between_volume_bars = 2
-    dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
-
-    # draw all tick data on canvas
+def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels):
+    """draw one frame on the canvas"""
+    global canvas
     bottom_right_coord_vertical_tick_separator_line_bottom = maximum_height_canvas + 20
-    height_of_volume_bar_in_pixels = 10
     range_of_ticks_to_draw = dom_data[start_index_tick_data:]
     max_price = max([pair[0] for sublist in [tick_data[2]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
     min_price = min([pair[0] for sublist in [tick_data[1]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
@@ -88,6 +82,17 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
         canvas_with_left = top_left_coordinate_left
+    return min_price, max_price, scaling_factor
+
+def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
+    """draw dom data on the canvas"""
+    maximum_with_canvas, maximum_height_canvas = get_canvas_size_for_drawing_volumes(canvas)
+    one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
+    space_between_volume_bars = 2
+    height_of_volume_bar_in_pixels = 10
+
+    dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
+    min_price, max_price, scaling_factor =  draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     
     # draw horizontal prices lines each 0.0001 and 0.00005 price level
     whole_range_of_0_00001 = np.arange(min_price, max_price, 0.00001)
