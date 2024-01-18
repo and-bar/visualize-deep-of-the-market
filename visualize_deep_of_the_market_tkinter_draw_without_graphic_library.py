@@ -82,18 +82,6 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
         canvas_with_left = top_left_coordinate_left
-    return min_price, max_price, scaling_factor
-
-def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
-    """draw dom data on the canvas"""
-    maximum_with_canvas, maximum_height_canvas = get_canvas_size_for_drawing_volumes(canvas)
-    one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
-    space_between_volume_bars = 2
-    height_of_volume_bar_in_pixels = 10
-
-    dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
-    min_price, max_price, scaling_factor =  draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
-    
     # draw horizontal prices lines each 0.0001 and 0.00005 price level
     whole_range_of_0_00001 = np.arange(min_price, max_price, 0.00001)
     nested_list  = [[level, round(level+0.00005, 5)] for level in whole_range_of_0_00001 if ( int(("{:.5f}".format(level))[-1]) / 5) == 1]
@@ -102,19 +90,24 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw):
     [canvas.create_rectangle(0, price_level, maximum_with_canvas, price_level, fill="black") for price_level in level_line_prices_pixels]
     list_price_levels_plus_pixel_levels = list(zip(list_price_levels, level_line_prices_pixels))
     [canvas.create_text(maximum_with_canvas + 40, level_line_prices_pixels, text= "{:.5f}".format(round(price, 5)), fill="black", font=('Helvetica', '15', 'bold italic')) for price, level_line_prices_pixels in list_price_levels_plus_pixel_levels]
-    
-    root.after(50, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 1))
+    return min_price, max_price, scaling_factor
 
+def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pixel_equeal_n_volume):
+    """draw dom data on the canvas"""
+    maximum_with_canvas, maximum_height_canvas = get_canvas_size_for_drawing_volumes(canvas)
+    space_between_volume_bars = 2
+    height_of_volume_bar_in_pixels = 10
+    dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
+    draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
+    # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
+    root.after(50, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 10, one_pixel_equeal_n_volume))
 
 directory = 'C:/Temp/dom request data'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
-
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 500000
+one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
-
-# scope_data = full_data_of_ticks
-
 
 root = tk.Tk()
 root.title("EUR USD deep of the market")
@@ -122,8 +115,7 @@ root.state('zoomed') # Maximize the window
 canvas = tk.Canvas(root, bg='gray50')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
 end_tick_bar_to_draw = 1
-draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw)
-    
+draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw, one_pixel_equeal_n_volume)
 root.mainloop()
 
 
