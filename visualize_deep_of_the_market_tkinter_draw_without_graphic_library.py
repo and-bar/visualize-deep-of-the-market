@@ -100,7 +100,7 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-    root.after(50, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 10, one_pixel_equeal_n_volume))
+    root.after(3000, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 50, one_pixel_equeal_n_volume))
 
 directory = 'C:/Temp/dom request data'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
@@ -110,19 +110,13 @@ one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
 
 root = tk.Tk()
-root.title("EUR USD deep of the market")
+root.title("EUR USD deep of the market. Volume scale: 1 pixel = " + f"{one_pixel_equeal_n_volume:,}".replace(",", ".") + " USD.")
 root.state('zoomed') # Maximize the window
 canvas = tk.Canvas(root, bg='gray50')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
 end_tick_bar_to_draw = 1
 draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw, one_pixel_equeal_n_volume)
 root.mainloop()
-
-
-
-
-
-
 
 # scope_data[1][0] # index
 # scope_data[1][1] # bid values
