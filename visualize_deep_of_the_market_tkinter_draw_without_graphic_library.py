@@ -27,12 +27,12 @@ def load_pickle_files(directory):
     return concatenated_list
 
 def get_canvas_size_for_drawing_volumes(canvas):
-    """Get canvas size that will be used for maximum boundaries drawing"""
+    """Get canvas size that will be used for maximum boundaries drawing of tick volumes"""
     global root
     if canvas.winfo_width() == 1:
-        return root.winfo_screenwidth() - 80, root.winfo_screenheight() - 20
+        return root.winfo_screenwidth() - 80, root.winfo_screenheight() - 120
     else:
-        return canvas.winfo_width() - 80, canvas.winfo_height() - 20
+        return canvas.winfo_width() - 80, canvas.winfo_height() - 120
     
 def get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw):
     "get number of ticks that will be drawn on canvas"
@@ -59,7 +59,22 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
     max_price = max([pair[0] for sublist in [tick_data[2]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
     min_price = min([pair[0] for sublist in [tick_data[1]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
     canvas.delete("all")
-    canvas_with_left = maximum_with_canvas #3840
+    canvas_with_left = maximum_with_canvas
+    # - - - - - preprocessing of data for drawing of total volumes and volume levels lines start
+    bid_total_volumes_of_tick = [tick_data[3][0]  for tick_data in range_of_ticks_to_draw]
+    ask_total_volumes_of_tick = [tick_data[3][1]  for tick_data in range_of_ticks_to_draw]
+    max_bid_ask_total_volumes_of_tick = max(max(bid_total_volumes_of_tick), max(ask_total_volumes_of_tick))
+    height_in_pixels_of_total_bids = [int(volume / max_bid_ask_total_volumes_of_tick * 100) for volume in bid_total_volumes_of_tick]
+    height_in_pixels_of_total_asks = [int(volume / max_bid_ask_total_volumes_of_tick * 100) for volume in ask_total_volumes_of_tick]
+    #drawing horizontal volumes lines
+    total_volumes_price_levels = np.arange(0,max_bid_ask_total_volumes_of_tick, 10000000)
+    total_volumes_price_levels = np.append(total_volumes_price_levels[1:], max_bid_ask_total_volumes_of_tick)
+    total_volume_levels_lines_pixels = [int(level/max_bid_ask_total_volumes_of_tick*100) for level in total_volumes_price_levels]
+    total_level_lines_texts_pixel = zip(total_volumes_price_levels, total_volume_levels_lines_pixels)
+    # draw lines of total volumes levels
+    [canvas.create_rectangle(0, bottom_right_coord_vertical_tick_separator_line_bottom+120-level, maximum_with_canvas, bottom_right_coord_vertical_tick_separator_line_bottom+120-level) for level in total_volume_levels_lines_pixels]
+    [canvas.create_text(maximum_with_canvas + 40, bottom_right_coord_vertical_tick_separator_line_bottom+120-level_line_volumes_pixels, text= f"{text:,}".replace(",", "."), fill="black", font=('Helvetica', '10', 'bold italic')) for text, level_line_volumes_pixels in total_level_lines_texts_pixel]
+    # - - - - - preprocessing of data for drawing of total volumes  and volume levels lines end
     for index in range(len(range_of_ticks_to_draw)-1, -1, -1):
         bid_prices, bid_volumes = zip(*range_of_ticks_to_draw[index][1])
         ask_prices, ask_volumes = zip(*range_of_ticks_to_draw[index][2])
@@ -77,10 +92,13 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
         ask_volume_pixels = list(zip(ask_pixels, ask_volumes_pixels))
         top_left_coordinate_left = canvas_with_left - max_volume_pixel - space_between_volume_bars
         # draw vertical line separation between ticks
-        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom, fill= "black", outline= "gray60")
+        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom + 120, fill= "black", outline= "gray60")
         # drawing volumes on the canvas
         [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
         [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
+        # drawing total volumes on the canvas
+        canvas.create_rectangle(top_left_coordinate_left+2, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+5, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_bids[index], fill="green") #total bid
+        canvas.create_rectangle(top_left_coordinate_left+6, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+9, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_asks[index], fill="red") #total ask
         canvas_with_left = top_left_coordinate_left
     # draw horizontal prices lines each 0.0001 and 0.00005 price level
     whole_range_of_0_00001 = np.arange(min_price, max_price, 0.00001)
@@ -90,7 +108,6 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
     [canvas.create_rectangle(0, price_level, maximum_with_canvas, price_level, fill="black") for price_level in level_line_prices_pixels]
     list_price_levels_plus_pixel_levels = list(zip(list_price_levels, level_line_prices_pixels))
     [canvas.create_text(maximum_with_canvas + 40, level_line_prices_pixels, text= "{:.5f}".format(round(price, 5)), fill="black", font=('Helvetica', '15', 'bold italic')) for price, level_line_prices_pixels in list_price_levels_plus_pixel_levels]
-    return min_price, max_price, scaling_factor
 
 def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pixel_equeal_n_volume):
     """draw dom data on the canvas"""
@@ -102,7 +119,7 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
     root.after(3000, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 50, one_pixel_equeal_n_volume))
 
-directory = 'C:/Temp/dom request data'
+directory = 'C:/Temp/dom request data/otros datos'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 500000
