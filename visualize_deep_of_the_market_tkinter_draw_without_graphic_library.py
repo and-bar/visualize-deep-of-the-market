@@ -111,27 +111,40 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
 
 def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pixel_equeal_n_volume):
     """draw dom data on the canvas"""
+    global pause_drawing_on_the_canvas, end_tick_bar_to_draw_dynamic
     maximum_with_canvas, maximum_height_canvas = get_canvas_size_for_drawing_volumes(canvas)
     space_between_volume_bars = 2
     height_of_volume_bar_in_pixels = 10
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
-    # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-    root.after(3000, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + 50, one_pixel_equeal_n_volume))
+    if pause_drawing_on_the_canvas == False:
+        step_of_next_shift = 10
+        end_tick_bar_to_draw_dynamic += step_of_next_shift
+        # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
+        root.after(100, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
-directory = 'C:/Temp/dom request data/otros datos'
+def toggle_pause_drawing_on_the_canvas(dom_data_full, end_tick_bar_to_draw):
+    global pause_drawing_on_the_canvas
+    pause_drawing_on_the_canvas = not pause_drawing_on_the_canvas
+    if pause_drawing_on_the_canvas == False:
+        draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw_dynamic, one_pixel_equeal_n_volume)
+
+directory = 'C:/Temp/dom request data'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 500000
 one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
+end_tick_bar_to_draw = 1
+end_tick_bar_to_draw_dynamic = 1
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
-
+pause_drawing_on_the_canvas = False
 root = tk.Tk()
 root.title("EUR USD deep of the market. Volume scale: 1 pixel = " + f"{one_pixel_equeal_n_volume:,}".replace(",", ".") + " USD.")
 root.state('zoomed') # Maximize the window
 canvas = tk.Canvas(root, bg='gray50')
 canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-end_tick_bar_to_draw = 1
+pause_button = tk.Button(root, text="Pause", command=lambda: toggle_pause_drawing_on_the_canvas(scope_data, end_tick_bar_to_draw_dynamic) )
+pause_button.pack()
 draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw, one_pixel_equeal_n_volume)
 root.mainloop()
 
