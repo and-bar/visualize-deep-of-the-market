@@ -32,7 +32,7 @@ def get_canvas_size_for_drawing_volumes(canvas):
     if canvas.winfo_width() == 1:
         return root.winfo_screenwidth() - 80, root.winfo_screenheight() - 120
     else:
-        return canvas.winfo_width() - 80, canvas.winfo_height() - 120
+        return canvas.winfo_width() - 80, canvas.winfo_height() - 140
     
 def get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw):
     "get number of ticks that will be drawn on canvas"
@@ -53,7 +53,7 @@ def get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_can
 
 def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels):
     """draw one frame on the canvas"""
-    global canvas
+    global canvas, date_of_first_tick_of_full_data, date_of_last_tick_of_full_data
     bottom_right_coord_vertical_tick_separator_line_bottom = maximum_height_canvas + 20
     range_of_ticks_to_draw = dom_data[start_index_tick_data:]
     max_price = max([pair[0] for sublist in [tick_data[2]  for tick_data in range_of_ticks_to_draw] for pair in sublist])
@@ -68,7 +68,7 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
     height_in_pixels_of_total_asks = [int(volume / max_bid_ask_total_volumes_of_tick * 100) for volume in ask_total_volumes_of_tick]
     #drawing horizontal volumes lines
     total_volumes_price_levels = np.arange(0,max_bid_ask_total_volumes_of_tick, 10000000)
-    total_volumes_price_levels = np.append(total_volumes_price_levels[1:], max_bid_ask_total_volumes_of_tick)
+    total_volumes_price_levels = np.append(total_volumes_price_levels[1:-1], max_bid_ask_total_volumes_of_tick)
     total_volume_levels_lines_pixels = [int(level/max_bid_ask_total_volumes_of_tick*100) for level in total_volumes_price_levels]
     total_level_lines_texts_pixel = zip(total_volumes_price_levels, total_volume_levels_lines_pixels)
     # draw lines of total volumes levels
@@ -108,6 +108,11 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
     [canvas.create_rectangle(0, price_level, maximum_with_canvas, price_level, fill="black") for price_level in level_line_prices_pixels]
     list_price_levels_plus_pixel_levels = list(zip(list_price_levels, level_line_prices_pixels))
     [canvas.create_text(maximum_with_canvas + 40, level_line_prices_pixels, text= "{:.5f}".format(round(price, 5)), fill="black", font=('Helvetica', '15', 'bold italic')) for price, level_line_prices_pixels in list_price_levels_plus_pixel_levels]
+    # update text info of the label on the bottom
+    date_time_of_last_tick = f"{range_of_ticks_to_draw[-1][0].year}:{range_of_ticks_to_draw[-1][0].month}:{range_of_ticks_to_draw[-1][0].day} - {range_of_ticks_to_draw[-1][0].hour}:{range_of_ticks_to_draw[-1][0].minute}:{range_of_ticks_to_draw[-1][0].second}      "
+    max_bid_label_text = f"{max(bid_total_volumes_of_tick):,}".replace(",", ".")
+    max_ask_label_text = f"{max(ask_total_volumes_of_tick):,}".replace(",", ".")
+    label.config(text= "First tick: " + date_of_first_tick_of_full_data + "     Last tick: " + date_of_last_tick_of_full_data + "     Current tick: " + date_time_of_last_tick + f"           MAX BID {max_bid_label_text} |  MAX ASK: {max_ask_label_text}") 
 
 def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pixel_equeal_n_volume):
     """draw dom data on the canvas"""
@@ -121,9 +126,9 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
         step_of_next_shift = 10
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-        root.after(100, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
+        root.after(600, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
-def toggle_pause_drawing_on_the_canvas(dom_data_full, end_tick_bar_to_draw):
+def toggle_pause_drawing_on_the_canvas(dom_data_full):
     global pause_drawing_on_the_canvas
     pause_drawing_on_the_canvas = not pause_drawing_on_the_canvas
     if pause_drawing_on_the_canvas == False:
@@ -132,7 +137,7 @@ def toggle_pause_drawing_on_the_canvas(dom_data_full, end_tick_bar_to_draw):
 directory = 'C:/Temp/dom request data'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
-boundry_of_volume_for_deletion = 500000
+boundry_of_volume_for_deletion = 50000
 one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
 end_tick_bar_to_draw = 1
 end_tick_bar_to_draw_dynamic = 1
@@ -141,10 +146,25 @@ pause_drawing_on_the_canvas = False
 root = tk.Tk()
 root.title("EUR USD deep of the market. Volume scale: 1 pixel = " + f"{one_pixel_equeal_n_volume:,}".replace(",", ".") + " USD.")
 root.state('zoomed') # Maximize the window
+
+# Configure the grid layout
+root.grid_columnconfigure(0, weight=1)  # Make the canvas column expandable
+root.grid_columnconfigure(1, weight=0)  # Fixed width column for the text widget
+root.grid_rowconfigure(0, weight=1)     # Make the canvas row expandable
+root.grid_rowconfigure(1, weight=0)     # Fixed height row for the button and text widget
+
 canvas = tk.Canvas(root, bg='gray50')
-canvas.pack(fill='both', expand=True)  # Fill and expand in both directions
-pause_button = tk.Button(root, text="Pause", command=lambda: toggle_pause_drawing_on_the_canvas(scope_data, end_tick_bar_to_draw_dynamic) )
-pause_button.pack()
+canvas.grid(row=0, column=0, columnspan=2, sticky='nsew')  # Span two columns
+
+pause_button = tk.Button(root, text="Pause", command=lambda: toggle_pause_drawing_on_the_canvas(scope_data) )
+pause_button.grid(row=1, column=0, sticky='nw')
+
+# Create and place the Text widget (memo)
+date_of_first_tick_of_full_data = f"{full_data_of_ticks[0][0].year}:{full_data_of_ticks[0][0].month}:{full_data_of_ticks[0][0].day} - {full_data_of_ticks[0][0].hour}:{full_data_of_ticks[0][0].minute}:{full_data_of_ticks[0][0].second}"
+date_of_last_tick_of_full_data = f"{full_data_of_ticks[-1][0].year}:{full_data_of_ticks[-1][0].month}:{full_data_of_ticks[-1][0].day} - {full_data_of_ticks[-1][0].hour}:{full_data_of_ticks[-1][0].minute}:{full_data_of_ticks[-1][0].second}"
+label = tk.Label(root, text="", anchor="w", fg="red")
+label.grid(row=1, column=1, sticky='nw')
+
 draw_dom_data_on_canvas(canvas, scope_data, end_tick_bar_to_draw, one_pixel_equeal_n_volume)
 root.mainloop()
 
