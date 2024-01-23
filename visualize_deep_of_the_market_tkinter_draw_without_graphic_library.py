@@ -39,17 +39,18 @@ def get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_can
     #canvas_with_left = maximum_with_canvas #3840
     dom_data = dom_data_full[:end_tick_bar_to_draw]
     n_tick = len(dom_data) - 1
-    while ((maximum_with_canvas > 0) and (n_tick >= 0)):
+    #while ((maximum_with_canvas > 0) and (n_tick >= 0)):
+    while True:
         _, bid_volumes = zip(*dom_data[n_tick][1])
         _, ask_volumes = zip(*dom_data[n_tick][2])
-        bid_volumes_pixels = [round(element / one_pixel_equeal_n_volume) for element in bid_volumes]
-        ask_volumes_pixels = [round(element / one_pixel_equeal_n_volume) for element in ask_volumes]
+        bid_volumes_pixels = [int(element / one_pixel_equeal_n_volume) for element in bid_volumes]
+        ask_volumes_pixels = [int(element / one_pixel_equeal_n_volume) for element in ask_volumes]
         max_volume_pixel = max(max(bid_volumes_pixels), max(ask_volumes_pixels))
-        maximum_with_canvas -= max_volume_pixel - space_between_volume_bars
-        if maximum_with_canvas - max_volume_pixel <= 0: # can not draw to the left
+        maximum_with_canvas -= max_volume_pixel + space_between_volume_bars
+        if ((maximum_with_canvas - max_volume_pixel) < 0) or (n_tick == 0): # can not draw to the left
             break
         n_tick -= 1
-    return dom_data, n_tick+1
+    return dom_data, n_tick #+1
 
 def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels):
     """draw one frame on the canvas"""
@@ -94,8 +95,8 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
         # draw vertical line separation between ticks
         canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom + 120, fill= "black", outline= "gray60")
         # drawing volumes on the canvas
-        [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
-        [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
+        [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green", outline="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
+        [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red", outline="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
         # drawing total volumes on the canvas
         canvas.create_rectangle(top_left_coordinate_left+2, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+5, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_bids[index], fill="green") #total bid
         canvas.create_rectangle(top_left_coordinate_left+6, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+9, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_asks[index], fill="red") #total ask
@@ -123,10 +124,10 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     if pause_drawing_on_the_canvas == False:
-        step_of_next_shift = 10
+        step_of_next_shift = 500
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-        root.after(600, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
+        root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
 def toggle_pause_drawing_on_the_canvas(dom_data_full):
     global pause_drawing_on_the_canvas
@@ -138,7 +139,7 @@ directory = 'C:/Temp/dom request data'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 50000
-one_pixel_equeal_n_volume = 500000 # scaling here volume n000000 to one pixel
+one_pixel_equeal_n_volume = 10000000 # scaling here volume n000000 to one pixel
 end_tick_bar_to_draw = 1
 end_tick_bar_to_draw_dynamic = 1
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
