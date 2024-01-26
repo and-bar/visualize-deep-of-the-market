@@ -93,10 +93,10 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
         ask_volume_pixels = list(zip(ask_pixels, ask_volumes_pixels))
         top_left_coordinate_left = canvas_with_left - max_volume_pixel - space_between_volume_bars
         # draw vertical line separation between ticks
-        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom + 120, fill= "black", outline= "gray60")
+        canvas.create_rectangle(top_left_coordinate_left, 0, top_left_coordinate_left, bottom_right_coord_vertical_tick_separator_line_bottom + 120, fill= "black", outline= "gray45")
         # drawing volumes on the canvas
-        [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="green", outline="green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
-        [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red", outline="red") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
+        [canvas.create_rectangle(top_left_coordinate_left, price_bid_pixel, top_left_coordinate_left + volume_bid_pixel, price_bid_pixel+height_of_volume_bar_in_pixels, fill="lime green", outline="dark green") for price_bid_pixel, volume_bid_pixel in bid_volume_pixels] #bids
+        [canvas.create_rectangle(top_left_coordinate_left, price_ask_pixel, top_left_coordinate_left + volume_ask_pixel, price_ask_pixel+height_of_volume_bar_in_pixels, fill="red", outline="red4") for price_ask_pixel, volume_ask_pixel in ask_volume_pixels] #asks
         # drawing total volumes on the canvas
         canvas.create_rectangle(top_left_coordinate_left+2, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+5, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_bids[index], fill="green") #total bid
         canvas.create_rectangle(top_left_coordinate_left+6, bottom_right_coord_vertical_tick_separator_line_bottom+120, top_left_coordinate_left+9, bottom_right_coord_vertical_tick_separator_line_bottom + 120 - height_in_pixels_of_total_asks[index], fill="red") #total ask
@@ -124,10 +124,10 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     if pause_drawing_on_the_canvas == False:
-        step_of_next_shift = 500
+        step_of_next_shift = 200
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-        root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
+        root.after(500, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
 def toggle_pause_drawing_on_the_canvas(dom_data_full):
     global pause_drawing_on_the_canvas
@@ -135,11 +135,17 @@ def toggle_pause_drawing_on_the_canvas(dom_data_full):
     if pause_drawing_on_the_canvas == False:
         draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw_dynamic, one_pixel_equeal_n_volume)
 
-directory = 'C:/Temp/dom request data'
+directory = 'C:/Temp/dom request data/test'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
+
+# Run this in loop on the dom tick data for reducing space between market prices and more deep dom prices for visualization for bids and asks
+for _ in range(4):
+    full_data_of_ticks = [[tick[0], tick[1][:-1], tick[2], tick[3]] if (tick[1][0][0] - tick[1][-1][0]) > 0.0012 else [tick[0], tick[1], tick[2], tick[3]]  for tick in full_data_of_ticks]
+    full_data_of_ticks = [[tick[0], tick[1], tick[2][:-1], tick[3]] if (tick[2][-1][0] - tick[2][0][0]) > 0.0012 else [tick[0], tick[1], tick[2], tick[3]]  for tick in full_data_of_ticks]
+
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 50000
-one_pixel_equeal_n_volume = 10000000 # scaling here volume n000000 to one pixel
+one_pixel_equeal_n_volume = 1000000 # scaling here volume n000000 to one pixel
 end_tick_bar_to_draw = 1
 end_tick_bar_to_draw_dynamic = 1
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
@@ -154,7 +160,7 @@ root.grid_columnconfigure(1, weight=0)  # Fixed width column for the text widget
 root.grid_rowconfigure(0, weight=1)     # Make the canvas row expandable
 root.grid_rowconfigure(1, weight=0)     # Fixed height row for the button and text widget
 
-canvas = tk.Canvas(root, bg='gray50')
+canvas = tk.Canvas(root, bg='gray40')
 canvas.grid(row=0, column=0, columnspan=2, sticky='nsew')  # Span two columns
 
 pause_button = tk.Button(root, text="Pause", command=lambda: toggle_pause_drawing_on_the_canvas(scope_data) )
