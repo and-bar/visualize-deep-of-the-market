@@ -124,10 +124,10 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     if pause_drawing_on_the_canvas == False:
-        step_of_next_shift = 200
+        step_of_next_shift = 300
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-        root.after(500, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
+        root.after(50, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
 def toggle_pause_drawing_on_the_canvas(dom_data_full):
     global pause_drawing_on_the_canvas
@@ -138,14 +138,9 @@ def toggle_pause_drawing_on_the_canvas(dom_data_full):
 directory = 'C:/Temp/dom request data/test'
 full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
 
-# Run this in loop on the dom tick data for reducing space between market prices and more deep dom prices for visualization for bids and asks
-for _ in range(4):
-    full_data_of_ticks = [[tick[0], tick[1][:-1], tick[2], tick[3]] if (tick[1][0][0] - tick[1][-1][0]) > 0.0012 else [tick[0], tick[1], tick[2], tick[3]]  for tick in full_data_of_ticks]
-    full_data_of_ticks = [[tick[0], tick[1], tick[2][:-1], tick[3]] if (tick[2][-1][0] - tick[2][0][0]) > 0.0012 else [tick[0], tick[1], tick[2], tick[3]]  for tick in full_data_of_ticks]
-
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 50000
-one_pixel_equeal_n_volume = 1000000 # scaling here volume n000000 to one pixel
+one_pixel_equeal_n_volume = 5000000 # scaling here volume n000000 to one pixel
 end_tick_bar_to_draw = 1
 end_tick_bar_to_draw_dynamic = 1
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
