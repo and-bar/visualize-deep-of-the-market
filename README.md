@@ -29,4 +29,4 @@ For questions, suggestions, or collaboration opportunities, please open an issue
 
 ![EURUSD DOM 1](https://github.com/and-bar/visualize-deep-of-the-market/assets/58216241/674dbc69-bd1d-4a74-abca-7079dd2465ed)
 
-Tags: #FinancialAnalysis #MarketVisualization #EURUSD #Python #Tkinter #TradingTools #OpenSource
+#FinancialAnalysis #MarketVisualization #EURUSD #Python #Tkinter #TradingTools #OpenSource
