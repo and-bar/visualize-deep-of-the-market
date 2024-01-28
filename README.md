@@ -27,6 +27,6 @@ This project is GPL-3.0 license. See the LICENSE file for more details.
 ## Contact
 For questions, suggestions, or collaboration opportunities, please open an issue in the repository or contact the maintainers directly via GitHub.
 
-
+![EURUSD DOM 1](https://github.com/and-bar/visualize-deep-of-the-market/assets/58216241/674dbc69-bd1d-4a74-abca-7079dd2465ed)
 
 Tags: #FinancialAnalysis #MarketVisualization #EURUSD #Python #Tkinter #TradingTools #OpenSource
