@@ -16,6 +16,7 @@ def load_pickle_files(directory):
     concatenated_list = []
     for filename in os.listdir(directory):
         if filename.endswith('.pickle_list'):
+            print(filename)
             filepath = os.path.join(directory, filename)
             try:
                 with open(filepath, 'rb') as file:
@@ -128,7 +129,7 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     if pause_drawing_on_the_canvas == False:
-        step_of_next_shift = 50
+        step_of_next_shift = 20
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
         root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
@@ -140,7 +141,8 @@ def toggle_pause_drawing_on_the_canvas(dom_data_full):
         draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw_dynamic, one_pixel_equeal_n_volume)
 
 directory = 'C:/Temp/dom request data/test'
-full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
+# full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # sort of tickes based on index
+full_data_of_ticks = load_pickle_files(directory)
 
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 50000
