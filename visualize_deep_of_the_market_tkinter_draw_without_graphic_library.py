@@ -103,8 +103,12 @@ def draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_t
         canvas_with_left = top_left_coordinate_left
     # draw horizontal prices lines each 0.0001 and 0.00005 price level
     whole_range_of_0_00001 = np.arange(min_price, max_price, 0.00001)
-    nested_list  = [[level, round(level+0.00005, 5)] for level in whole_range_of_0_00001 if ( int(("{:.5f}".format(level))[-1]) / 5) == 1]
+    nested_list  = [[level, level+0.00005] for level in whole_range_of_0_00001 if ( int(("{:.5f}".format(level))[-1]) / 5) == 1]
     list_price_levels = [element for pair in nested_list for element in pair]
+    if (list_price_levels[0]-min_price > 0.00005):
+        list_price_levels.append(list_price_levels[0]-0.00005)
+    else:
+        list_price_levels.append(min_price)
     level_line_prices_pixels = [int(maximum_height_canvas - (price - min_price) * scaling_factor) + height_of_volume_bar_in_pixels for price in list_price_levels]
     [canvas.create_rectangle(0, price_level, maximum_with_canvas, price_level, fill="black") for price_level in level_line_prices_pixels]
     list_price_levels_plus_pixel_levels = list(zip(list_price_levels, level_line_prices_pixels))
@@ -124,10 +128,10 @@ def draw_dom_data_on_canvas (canvas, dom_data_full, end_tick_bar_to_draw, one_pi
     dom_data, start_index_tick_data = get_number_of_ticks_that_will_fit_on_canvas (dom_data_full, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, end_tick_bar_to_draw)
     draw_one_frame_on_the_canvas (maximum_height_canvas, dom_data, start_index_tick_data, maximum_with_canvas, one_pixel_equeal_n_volume, space_between_volume_bars, height_of_volume_bar_in_pixels)
     if pause_drawing_on_the_canvas == False:
-        step_of_next_shift = 300
+        step_of_next_shift = 50
         end_tick_bar_to_draw_dynamic += step_of_next_shift
         # in next line you can control how many next ticks will be drawn on the canvas: end_tick_bar_to_draw + ##
-        root.after(50, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
+        root.after(10, lambda: draw_dom_data_on_canvas(canvas, dom_data_full, end_tick_bar_to_draw + step_of_next_shift, one_pixel_equeal_n_volume))
 
 def toggle_pause_drawing_on_the_canvas(dom_data_full):
     global pause_drawing_on_the_canvas
@@ -140,7 +144,7 @@ full_data_of_ticks = sorted(load_pickle_files(directory), key=lambda x: x[0]) # 
 
 # with purpose of quicker visualization from tick data will be deleted small volumes for beter visual representation
 boundry_of_volume_for_deletion = 50000
-one_pixel_equeal_n_volume = 5000000 # scaling here volume n000000 to one pixel
+one_pixel_equeal_n_volume = 1000000 # scaling here volume n000000 to one pixel
 end_tick_bar_to_draw = 1
 end_tick_bar_to_draw_dynamic = 1
 scope_data = [[sublist[0], [pair for pair in sublist[1] if pair[1] >= boundry_of_volume_for_deletion], [pair for pair in sublist[2] if pair[1] >= boundry_of_volume_for_deletion], sublist[3]] for sublist in full_data_of_ticks]
