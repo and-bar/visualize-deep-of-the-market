@@ -49,7 +49,7 @@
 #             lenght_original_file = len(dom_data)
 #             print(f"len of dom data before processing: {lenght_original_file}")
 #             new_dom_data = [tick for tick in dom_data if ( tick[1] != [])]
-#             new_dom_data = [tick for tick in dom_data if ( tick[2] != [])]
+#             new_dom_data = [tick for tick in new_dom_data if ( tick[2] != [])]
 #             lenght_new_data = len(new_dom_data)
 #             print(f"len of dom after deleting emty ticks: {lenght_new_data}")
 #             print(f"TICKS DELETED: {lenght_original_file - lenght_new_data}")
