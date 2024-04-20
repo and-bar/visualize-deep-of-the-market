@@ -108,7 +108,7 @@ for filename in os.listdir(directory):
 
 
 """
-Create one second timeframe OHLCV candle charts save them to pdf
+Create one second timeframe OHLCV candle charts save them to png
 
 """
 import pandas as pd
@@ -116,7 +116,7 @@ import mplfinance as mpf
 import pandas
 
 # Sample DataFrame with OHLCV data
-df = pandas.read_pickle("pandas_df_1_second_OHLCV_eurusd_11-2019.pkl")
+df = pd.read_pickle("pandas_df_1_second_OHLCV_eurusd_11-2019.pkl")
 df.index = df.index.tz_localize(None)
 
 seconds_in_chart = 2000
@@ -132,3 +132,118 @@ while True:
     end +=seconds_in_chart
     if end > df.shape[0]:
         break
+
+
+"""
+Create pandas dataframe forming 1 second OLHCV rows based on the data from tick of dom
+"""
+import pickle
+import pandas as pd
+import datetime
+
+filepath = 'C:\Temp\dom request data\cleaned-dom-eurusd-01-2020.pickle_list'
+with open(filepath, 'rb') as file:
+    current_data = pickle.load(file)
+
+# Define the column names
+columns = ['open', 'high', 'low', 'close', 'volume']
+# Create an empty DataFrame with these columns
+df_second_candlestick = pd.DataFrame(columns=columns)
+df_second_candlestick['volume'] = df_second_candlestick['volume'].astype(float)
+
+# running through dom list and forming 1 second dataframe OLHCV
+for tick in current_data:
+    time_of_tick_with_miliseconds = tick[0]
+    time_of_tick = datetime.datetime(
+                                        time_of_tick_with_miliseconds.year,
+                                        time_of_tick_with_miliseconds.month,
+                                        time_of_tick_with_miliseconds.day,
+                                        time_of_tick_with_miliseconds.hour,
+                                        time_of_tick_with_miliseconds.minute,
+                                        time_of_tick_with_miliseconds.second,
+                                        tzinfo=time_of_tick_with_miliseconds.tzinfo
+                                    )
+    # get highest bid of last tick
+    bid_of_last_tick = tick[1][0][0]
+    total_volume_bid_ask_of_last_tick = tick[3][1] + tick[3][0]
+    #print(f"{time_of_tick}   {bid_of_last_tick}   {total_volume_bid_ask_of_last_tick}")
+
+    # get last element from df_second_candlestick
+    if not df_second_candlestick.empty:
+        # data frame is not empty
+        # check if exist candlestick with current timestamp
+        if time_of_tick in df_second_candlestick.index:
+            # datetime of current tick exist in data frame
+            if bid_of_last_tick > df_second_candlestick.at[time_of_tick, 'high']:
+                df_second_candlestick.at[time_of_tick, 'high'] = bid_of_last_tick
+            if bid_of_last_tick < df_second_candlestick.at[time_of_tick, 'low']:
+                df_second_candlestick.at[time_of_tick, 'low'] = bid_of_last_tick
+            df_second_candlestick.at[time_of_tick, 'close'] = bid_of_last_tick
+            df_second_candlestick.at[time_of_tick, 'volume'] += total_volume_bid_ask_of_last_tick
+        else:
+            # datetime of current tick do not present in data frame
+            # add new candlestick data row in df
+            seconds_candlestick_ohlc = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
+            df_second_candlestick.loc[time_of_tick] = seconds_candlestick_ohlc
+    else:
+        # data frame is empty, write first element to data frame
+        seconds_candlestick_ohlc = {'open': bid_of_last_tick, 'high': bid_of_last_tick, 'close': bid_of_last_tick, 'low': bid_of_last_tick, 'volume': total_volume_bid_ask_of_last_tick}
+        df_second_candlestick.loc[time_of_tick] = seconds_candlestick_ohlc
+
+print(df_second_candlestick.shape)
+df_second_candlestick.to_pickle("C:\Temp\dom request data\pandas_df_1_second_OHLCV_eurusd_01-2020.pkl")
+
+
+
+"""
+sorting all ticks by time in pickle files
+"""
+
+import os
+import pickle
+directory = "C:/Temp/dom request data"
+directory_modified = "C:/Temp/dom request data/ordered by indices"
+for filename in os.listdir(directory):
+    if filename.endswith('.pickle_list'):
+        
+        filepath = os.path.join(directory, filename)
+        
+        with open(filepath, 'rb') as file:
+            dom_data = pickle.load(file)
+        
+        dom_data = sorted(dom_data, key=lambda x: x[0]) # sort of tickes based on index
+        
+        filename_new = directory_modified + "/" + filename
+        with open(filename_new, 'wb') as write_file:
+            pickle.dump(dom_data, write_file)
+
+
+"""
+concatenate pickle files
+"""
+import os, pickle
+
+def load_pickle_files(directory):
+    """Load and concatenate lists from all pickle files in the given directory."""
+    concatenated_list = []
+    for filename in os.listdir(directory):
+        if filename.endswith('.pickle_list'):
+            print(filename)
+            filepath = os.path.join(directory, filename)
+            try:
+                with open(filepath, 'rb') as file:
+                    data = pickle.load(file)
+                    if isinstance(data, list):
+                        concatenated_list.extend(data)
+            except Exception as e:
+                print(f"Error loading {filename}: {e}")
+    return concatenated_list
+
+directory = 'C:/Temp/dom request data/01-2020'
+full_data_of_ticks = load_pickle_files(directory)
+
+filename_new = 'C:/Temp/dom request data/cleaned-dom-eurusd-01-2020.pickle_list'
+with open(filename_new, 'wb') as write_file:
+            pickle.dump(full_data_of_ticks, write_file)
+
+
